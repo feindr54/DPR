@@ -63,7 +63,7 @@ class CrossAttentionModule(nn.Module):
             query = self.cx_attention[i*3+2](self.cx_attention[i*3+1](query))
         return query
 
-similarity_score_fn = CrossAttentionModule()
+similarity_score_fn = CrossAttentionModule("cuda:0")
 
 def dot_product_scores(q_vectors: T, ctx_vectors: T) -> T:
     """
@@ -92,7 +92,6 @@ def transformer_similarity_scores(q_vectors: T, ctx_vectors: T) -> T:
     """
     scores = similarity_score_fn(q_vectors, ctx_vectors)
     return scores
-
 
 def cosine_scores(q_vector: T, ctx_vectors: T):
     # q_vector: n1 x D, ctx_vectors: n2 x D, result n1 x n2
