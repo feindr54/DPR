@@ -661,6 +661,7 @@ def _calc_loss(
         positive_idx_per_question = local_positive_idxs
         hard_negatives_per_question = local_hard_negatives_idxs
 
+    # TODO - add the encoder
     loss, is_correct = loss_function.calc(
         global_q_vector,
         global_ctxs_vector,
@@ -724,7 +725,7 @@ def _do_biencoder_fwd_pass(
 
     local_q_vector, local_ctx_vectors = model_out
 
-    loss_function = BiEncoderNllLoss()
+    loss_function = BiEncoderNllLoss(model)
 
     loss, is_correct = _calc_loss(
         cfg,

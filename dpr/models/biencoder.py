@@ -299,10 +299,11 @@ class BiEncoder(nn.Module):
 
 
 class BiEncoderNllLoss(object):
+    def __init__(self, model):
+        self.biencoder = model
     # TODO - add cross attention scoring module as the input
     def calc(
         self,
-        biencoder,
         q_vectors: T,
         ctx_vectors: T,
         positive_idx_per_question: list,
@@ -317,7 +318,7 @@ class BiEncoderNllLoss(object):
         """
         # TESTING - new score function
         # scores = self.get_scores(q_vectors, ctx_vectors)
-        scores = biencoder.cross_attention(q_vectors, ctx_vectors)
+        scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
 
         if len(q_vectors.size()) > 1:
             q_num = q_vectors.size(0)
