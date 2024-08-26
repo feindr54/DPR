@@ -41,6 +41,29 @@ BiEncoderBatch = collections.namedtuple(
 # TODO: it is only used by _select_span_with_token. Move them to utils
 rnd = random.Random(0)
 
+class CrossAttentionModule(nn.Module):
+    def __init__(self, device, attention_layers=6):
+        super(CrossAttentionModule, self).__init__()
+        self.cx_attention = [] # output remains query size, ie abatch x seqlen x 768
+        self.attention_layers = attention_layers
+
+        for _ in range(self.attention_layers):
+            self.cx_attention.append(nn.MultiheadAttention(768, 8, batch_first=True, device=device))
+            self.cx_attention.append(nn.Linear(in_features=768, out_features=768, device=device))
+            self.cx_attention.append(nn.ReLU())
+
+    def forward(self, query, context):
+        query = query.cuda()
+        key = context.cuda()
+        value = context.cuda()
+        for i in range(self.attention_layers):
+            # cross attention layer
+            query = self.cx_attention[i*3](query, key, value)[0] # 0th index is attn output, 1st index is attention weights
+            # feedforward layer
+            query = self.cx_attention[i*3+2](self.cx_attention[i*3+1](query))
+        return query
+
+similarity_score_fn = CrossAttentionModule()
 
 def dot_product_scores(q_vectors: T, ctx_vectors: T) -> T:
     """
@@ -49,9 +72,26 @@ def dot_product_scores(q_vectors: T, ctx_vectors: T) -> T:
     :param ctx_vector:
     :return:
     """
-    # q_vector: n1 x D, ctx_vectors: n2 x D, result n1 x n2
+    # q_vector: n1 x D, ctx_vectors: n2 x D, result n1 x n2 -> dot product
     r = torch.matmul(q_vectors, torch.transpose(ctx_vectors, 0, 1))
+
+    # print the sizes of the q_vectors and ctx_vectors
+    print("q vector size: ", q_vectors.size())
+    print("ctx vector size: ", ctx_vectors.size())
+    # print the size of the result
+    print("result size: ", r.size())
+
     return r
+
+def transformer_similarity_scores(q_vectors: T, ctx_vectors: T) -> T:
+    """
+    Applies cross attention mechanism between the query and context vectors to obtain a similarity score
+    :param q_vectors: n1 x D
+    :param ctx_vectors: n2 x D
+    :return: n1 x n2 similarity score matrix
+    """
+    scores = similarity_score_fn(q_vectors, ctx_vectors)
+    return scores
 
 
 def cosine_scores(q_vector: T, ctx_vectors: T):
