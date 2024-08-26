@@ -63,8 +63,6 @@ class CrossAttentionModule(nn.Module):
             query = self.cx_attention[i*3+2](self.cx_attention[i*3+1](query))
         return query
 
-similarity_score_fn = CrossAttentionModule("cuda:0")
-
 def dot_product_scores(q_vectors: T, ctx_vectors: T) -> T:
     """
     calculates q->ctx scores for every row in ctx_vector
@@ -76,10 +74,10 @@ def dot_product_scores(q_vectors: T, ctx_vectors: T) -> T:
     r = torch.matmul(q_vectors, torch.transpose(ctx_vectors, 0, 1))
 
     # print the sizes of the q_vectors and ctx_vectors
-    print("q vector size: ", q_vectors.size())
-    print("ctx vector size: ", ctx_vectors.size())
-    # print the size of the result
-    print("result size: ", r.size())
+    # print("q vector size: ", q_vectors.size())
+    # print("ctx vector size: ", ctx_vectors.size())
+    # # print the size of the result
+    # print("result size: ", r.size())
 
     return r
 
@@ -91,6 +89,13 @@ def transformer_similarity_scores(q_vectors: T, ctx_vectors: T) -> T:
     :return: n1 x n2 similarity score matrix
     """
     scores = similarity_score_fn(q_vectors, ctx_vectors)
+
+    # print the sizes of the q_vectors and ctx_vectors
+    print("q vector size: ", q_vectors.size())
+    print("ctx vector size: ", ctx_vectors.size())
+    # print the size of the result
+    print("result size: ", scores.size())
+
     return scores
 
 def cosine_scores(q_vector: T, ctx_vectors: T):
@@ -113,6 +118,9 @@ class BiEncoder(nn.Module):
         self.ctx_model = ctx_model
         self.fix_q_encoder = fix_q_encoder
         self.fix_ctx_encoder = fix_ctx_encoder
+
+        # TODO - add cross attention scoring module
+        self.cross_attention = CrossAttentionModule("cuda:0")
 
     @staticmethod
     def get_representation(
@@ -291,8 +299,10 @@ class BiEncoder(nn.Module):
 
 
 class BiEncoderNllLoss(object):
+    # TODO - add cross attention scoring module as the input
     def calc(
         self,
+        biencoder,
         q_vectors: T,
         ctx_vectors: T,
         positive_idx_per_question: list,
@@ -307,7 +317,7 @@ class BiEncoderNllLoss(object):
         """
         # TESTING - new score function
         # scores = self.get_scores(q_vectors, ctx_vectors)
-        scores = self.get_cross_attention_scores(q_vectors, ctx_vectors)
+        scores = biencoder.cross_attention(q_vectors, ctx_vectors)
 
         if len(q_vectors.size()) > 1:
             q_num = q_vectors.size(0)
@@ -315,6 +325,7 @@ class BiEncoderNllLoss(object):
 
         softmax_scores = F.log_softmax(scores, dim=1)
 
+        # TODO - try with BCELogitsLoss and sigmoid
         loss = F.nll_loss(
             softmax_scores,
             torch.tensor(positive_idx_per_question).to(softmax_scores.device),
