@@ -305,7 +305,9 @@ class BiEncoderNllLoss(object):
         loss modifications. For example - weighted NLL with different factors for hard vs regular negatives.
         :return: a tuple of loss value and amount of correct predictions per batch
         """
-        scores = self.get_scores(q_vectors, ctx_vectors)
+        # TESTING - new score function
+        # scores = self.get_scores(q_vectors, ctx_vectors)
+        scores = self.get_cross_attention_scores(q_vectors, ctx_vectors)
 
         if len(q_vectors.size()) > 1:
             q_num = q_vectors.size(0)
@@ -333,8 +335,17 @@ class BiEncoderNllLoss(object):
         return f(q_vector, ctx_vectors)
 
     @staticmethod
+    def get_cross_attention_scores(q_vector: T, ctx_vectors: T) -> T:
+        f = BiEncoderNllLoss.get_cross_attention_similarity_function()
+        return f(q_vector, ctx_vectors)
+
+    @staticmethod
     def get_similarity_function():
         return dot_product_scores
+
+    @staticmethod
+    def get_cross_attention_similarity_function():
+        return transformer_similarity_scores
 
 
 def _select_span_with_token(text: str, tensorizer: Tensorizer, token_str: str = "[START_ENT]") -> T:
