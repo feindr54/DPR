@@ -328,7 +328,7 @@ class BiEncoderNllLoss(object):
         softmax_scores = F.sigmoid(scores)
 
         # TODO - try with BCELogitsLoss and sigmoid
-        loss = F.BCELogitsLoss(
+        loss = F.binary_cross_entropy_with_logits(
             softmax_scores,
             torch.tensor(positive_idx_per_question).to(softmax_scores.device),
             reduction="mean",
