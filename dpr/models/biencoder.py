@@ -325,7 +325,7 @@ class BiEncoderNllLoss(object):
             scores = scores.view(q_num, -1)
 
         # softmax_scores = F.log_softmax(scores, dim=1)
-        softmax_scores = F.sigmoid(scores, dim=1)
+        softmax_scores = F.sigmoid(scores)
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.BCELogitsLoss(
