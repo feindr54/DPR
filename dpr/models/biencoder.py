@@ -324,10 +324,11 @@ class BiEncoderNllLoss(object):
             q_num = q_vectors.size(0)
             scores = scores.view(q_num, -1)
 
-        softmax_scores = F.log_softmax(scores, dim=1)
+        # softmax_scores = F.log_softmax(scores, dim=1)
+        softmax_scores = F.sigmoid(scores, dim=1)
 
         # TODO - try with BCELogitsLoss and sigmoid
-        loss = F.nll_loss(
+        loss = F.BCELogitsLoss(
             softmax_scores,
             torch.tensor(positive_idx_per_question).to(softmax_scores.device),
             reduction="mean",
