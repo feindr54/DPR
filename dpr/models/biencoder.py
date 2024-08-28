@@ -322,7 +322,6 @@ class BiEncoderNllLoss(object):
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
         scores = self.biencoder.linear(scores).squeeze(-1)
 
-
         # if len(q_vectors.size()) > 1:
         #     q_num = q_vectors.size(0)
         #     scores = scores.view(q_num, -1)
@@ -330,6 +329,9 @@ class BiEncoderNllLoss(object):
         # softmax_scores = F.sigmoid(scores)
 
         softmax_scores = scores
+
+        print("softmax scores: ", softmax_scores)
+        print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
