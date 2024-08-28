@@ -321,7 +321,9 @@ class BiEncoderNllLoss(object):
         # scores = self.get_scores(q_vectors, ctx_vectors)
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
         print("cross attention scores: ", scores.size())
-        scores = self.biencoder.linear(scores).squeeze(-1)
+        scores = self.biencoder.linear(scores)
+        print("linear scores: ", scores.size())
+        scores = scores.squeeze()
 
         if len(q_vectors.size()) > 1:
             q_num = q_vectors.size(0)
