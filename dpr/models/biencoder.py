@@ -121,6 +121,7 @@ class BiEncoder(nn.Module):
 
         # TODO - add cross attention scoring module
         self.cross_attention = CrossAttentionModule("cuda:0")
+        self.linear = nn.Linear(in_features=768, out_features=1)
 
     @staticmethod
     def get_representation(
@@ -319,13 +320,15 @@ class BiEncoderNllLoss(object):
         # TESTING - new score function
         # scores = self.get_scores(q_vectors, ctx_vectors)
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
+        scores = self.biencoder.linear(scores).squeeze(-1)
 
         if len(q_vectors.size()) > 1:
             q_num = q_vectors.size(0)
             scores = scores.view(q_num, -1)
 
         # softmax_scores = F.log_softmax(scores, dim=1)
-        softmax_scores = F.sigmoid(scores)
+        # softmax_scores = F.sigmoid(scores)
+        softmax_scores = scores
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
