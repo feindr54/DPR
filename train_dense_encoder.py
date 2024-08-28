@@ -695,6 +695,8 @@ def _do_biencoder_fwd_pass(
 ) -> Tuple[torch.Tensor, int]:
 
     input = BiEncoderBatch(**move_to_device(input._asdict(), cfg.device))
+    # TESTING
+    print("input", input)
 
     q_attn_mask = tensorizer.get_attn_mask(input.question_ids)
     ctx_attn_mask = tensorizer.get_attn_mask(input.context_ids)
