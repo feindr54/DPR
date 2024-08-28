@@ -321,9 +321,10 @@ class BiEncoderNllLoss(object):
         # scores = self.get_scores(q_vectors, ctx_vectors)
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
         print("cross attention scores: ", scores.size())
-        scores = self.biencoder.linear(scores)
+        linear = self.biencoder.linear(scores)
         print("linear scores: ", scores.size())
-        scores = scores.squeeze()
+        scores = linear.squeeze(-1)
+        print("squeezed scores: ", scores.size())
 
         if len(q_vectors.size()) > 1:
             q_num = q_vectors.size(0)
@@ -331,7 +332,7 @@ class BiEncoderNllLoss(object):
 
         # softmax_scores = F.log_softmax(scores, dim=1)
         # softmax_scores = F.sigmoid(scores)
-        softmax_scores = scores
+        softmax_scores = scores.copy()
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
