@@ -339,6 +339,7 @@ class BiEncoderNllLoss(object):
         # scores = self.get_scores(q_vectors, ctx_vectors)
 
         # TODO - add another dimension to question vectors
+        print("q_vectors shape before repeating: ", q_vectors.shape)
         q_vectors = q_vectors.repeat(ctx_vectors.shape[0],1,1)
         print("q_vectors shape after repeating: ", q_vectors.shape)
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
