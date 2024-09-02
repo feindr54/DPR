@@ -202,7 +202,7 @@ class BiEncoder(nn.Module):
         # print("ctx_hidden: ", _ctx_hidden.shape)
         print("ctx_seq: ", _ctx_seq.shape)
 
-        return q_pooled_out, _ctx_hidden
+        return q_pooled_out, _ctx_seq
 
     def create_biencoder_input(
         self,
