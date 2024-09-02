@@ -181,15 +181,22 @@ class BiEncoder(nn.Module):
             self.fix_q_encoder,
             representation_token_pos=representation_token_pos,
         )
+        print("q_pooled_out type: ", type(q_pooled_out))
+        print("q_hidden type: ", type(_q_hidden))
+        print("q_seq type: ", type(_q_seq))
 
         print("q_pooled_out: ", q_pooled_out.shape)
-        print("q_hidden: ", _q_hidden.shape)
+        # print("q_hidden: ", _q_hidden.shape)
         print("q_seq: ", _q_seq.shape)
 
         ctx_encoder = self.ctx_model if encoder_type is None or encoder_type == "ctx" else self.question_model
         _ctx_seq, ctx_pooled_out, _ctx_hidden = self.get_representation(
             ctx_encoder, context_ids, ctx_segments, ctx_attn_mask, self.fix_ctx_encoder
         )
+
+        print("ctx_pooled_out type: ", type(ctx_pooled_out))
+        print("ctx_hidden type: ", type(_ctx_hidden))
+        print("ctx_seq type: ", type(_ctx_seq))
 
         print("ctx_pooled_out: ", ctx_pooled_out.shape)
         print("ctx_hidden: ", _ctx_hidden.shape)
