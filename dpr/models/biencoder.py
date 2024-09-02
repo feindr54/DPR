@@ -199,7 +199,7 @@ class BiEncoder(nn.Module):
         print("ctx_seq type: ", type(_ctx_seq))
 
         print("ctx_pooled_out: ", ctx_pooled_out.shape)
-        print("ctx_hidden: ", _ctx_hidden.shape)
+        # print("ctx_hidden: ", _ctx_hidden.shape)
         print("ctx_seq: ", _ctx_seq.shape)
 
         return q_pooled_out, _ctx_hidden
