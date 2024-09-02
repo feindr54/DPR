@@ -156,8 +156,11 @@ class BiEncoder(nn.Module):
                     representation_token_pos=representation_token_pos,
                 )
 
+        # TODO - test the seq output
+
         return sequence_output, pooled_output, hidden_states
 
+    # TODO -
     def forward(
         self,
         question_ids: T,
@@ -179,12 +182,20 @@ class BiEncoder(nn.Module):
             representation_token_pos=representation_token_pos,
         )
 
+        print("q_pooled_out: ", q_pooled_out.shape)
+        print("q_hidden: ", _q_hidden.shape)
+        print("q_seq: ", _q_seq.shape)
+
         ctx_encoder = self.ctx_model if encoder_type is None or encoder_type == "ctx" else self.question_model
         _ctx_seq, ctx_pooled_out, _ctx_hidden = self.get_representation(
             ctx_encoder, context_ids, ctx_segments, ctx_attn_mask, self.fix_ctx_encoder
         )
 
-        return q_pooled_out, ctx_pooled_out
+        print("ctx_pooled_out: ", ctx_pooled_out.shape)
+        print("ctx_hidden: ", _ctx_hidden.shape)
+        print("ctx_seq: ", _ctx_seq.shape)
+
+        return q_pooled_out, _ctx_hidden
 
     def create_biencoder_input(
         self,
@@ -332,6 +343,9 @@ class BiEncoderNllLoss(object):
 
         print("softmax scores: ", softmax_scores)
         print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
+
+        # TODO - convert the positive_idx_per_question to a label tensor
+
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
