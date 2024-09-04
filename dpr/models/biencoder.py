@@ -232,6 +232,12 @@ class BiEncoder(nn.Module):
         positive_ctx_indices = []
         hard_neg_ctx_indices = []
 
+        # print the number of hard negatives and other negatives
+        print("number of hard negatives: ", num_hard_negatives)
+        print("number of other negatives: ", num_other_negatives)
+        # print if positive entries are shuffled
+        print("shuffle positives: ", shuffle_positives)
+
         for sample in samples:
             # ctx+ & [ctx-] composition
             # as of now, take the first(gold) ctx+ only

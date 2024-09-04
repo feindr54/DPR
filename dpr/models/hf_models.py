@@ -225,7 +225,7 @@ class HFBertEncoder(BertModel):
         attention_mask: T,
         representation_token_pos=0,
     ) -> Tuple[T, ...]:
-
+        # runs the forward pass of BERTModel
         out = super().forward(
             input_ids=input_ids,
             token_type_ids=token_type_ids,
@@ -237,6 +237,9 @@ class HFBertEncoder(BertModel):
             out,
             transformers.modeling_outputs.BaseModelOutputWithPoolingAndCrossAttentions,
         ):
+            # print the condition that it passed to enter this branch
+            print("right hf version")
+
             sequence_output = out.last_hidden_state
             pooled_output = None
             hidden_states = out.hidden_states
