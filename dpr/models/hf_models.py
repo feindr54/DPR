@@ -245,8 +245,10 @@ class HFBertEncoder(BertModel):
             hidden_states = out.hidden_states
 
         elif self.config.output_hidden_states:
+            print("hidden states output allowed")
             sequence_output, pooled_output, hidden_states = out
         else:
+            print("no hidden states")
             hidden_states = None
             out = super().forward(
                 input_ids=input_ids,
