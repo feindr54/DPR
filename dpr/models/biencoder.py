@@ -359,7 +359,7 @@ class BiEncoderNllLoss(object):
 
         softmax_scores = scores
 
-        print("softmax scores: ", softmax_scores)
+        # print("softmax scores: ", softmax_scores)
         print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
 
         # TODO - convert the positive_idx_per_question to a label tensor
