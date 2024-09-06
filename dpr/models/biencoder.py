@@ -363,12 +363,16 @@ class BiEncoderNllLoss(object):
         print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
 
         # TODO - convert the positive_idx_per_question to a label tensor
+        labels = torch.zeros(ctx_vectors.shape[0], q_vectors.shape[0])
+        for i in range(len(positive_idx_per_question)):
+            labels[positive_idx_per_question[i], i] = 1
 
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
             softmax_scores,
-            torch.tensor(positive_idx_per_question).to(softmax_scores.device),
+            # torch.tensor(positive_idx_per_question).to(softmax_scores.device),
+            labels.to(softmax_scores.device),
             reduction="mean",
         )
 

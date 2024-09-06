@@ -268,6 +268,9 @@ class HFBertEncoder(BertModel):
 
         if self.encode_proj:
             pooled_output = self.encode_proj(pooled_output)
+
+        pooled_output = out.pooler_output
+
         return sequence_output, pooled_output, hidden_states
 
     # TODO: make a super class for all encoders
