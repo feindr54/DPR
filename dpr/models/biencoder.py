@@ -362,7 +362,7 @@ class BiEncoderNllLoss(object):
         # softmax_scores = F.log_softmax(scores, dim=1)
         # softmax_scores = F.sigmoid(scores)
 
-        softmax_scores = scores
+        softmax_scores = F.sigmoid(scores)
 
         # print("softmax scores: ", softmax_scores)
         # print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
