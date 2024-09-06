@@ -344,7 +344,12 @@ class BiEncoderNllLoss(object):
         # TESTING - new score function
         # scores = self.get_scores(q_vectors, ctx_vectors)
 
-        # TODO - add another dimension to question vectors
+        # convert the positive_idx_per_question to a label tensor
+        labels = torch.zeros(ctx_vectors.shape[0], q_vectors.shape[0])
+        for i in range(len(positive_idx_per_question)):
+            labels[positive_idx_per_question[i], i] = 1
+
+        # add another dimension to question vectors
         print("q_vectors shape before repeating: ", q_vectors.shape)
         q_vectors = q_vectors.repeat(ctx_vectors.shape[0],1,1)
         print("q_vectors shape after repeating: ", q_vectors.shape)
@@ -362,10 +367,7 @@ class BiEncoderNllLoss(object):
         # print("softmax scores: ", softmax_scores)
         print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
 
-        # TODO - convert the positive_idx_per_question to a label tensor
-        labels = torch.zeros(ctx_vectors.shape[0], q_vectors.shape[0])
-        for i in range(len(positive_idx_per_question)):
-            labels[positive_idx_per_question[i], i] = 1
+
 
 
         # TODO - try with BCELogitsLoss and sigmoid
