@@ -661,7 +661,9 @@ def _calc_loss(
         positive_idx_per_question = local_positive_idxs
         hard_negatives_per_question = local_hard_negatives_idxs
 
-    # TODO - add the encoder
+    # TODO - might add the label conversion part here instead of calc function
+
+    # TODO - just care about the loss will do, no need to concern with is_correct
     loss, is_correct = loss_function.calc(
         global_q_vector,
         global_ctxs_vector,
@@ -738,7 +740,8 @@ def _do_biencoder_fwd_pass(
         input.hard_negatives,
         loss_scale=loss_scale,
     )
-    is_correct = is_correct.sum().item()
+    # TODO - temp fix, not concerned with is_correct
+    # is_correct = is_correct.sum().item()
 
     if cfg.n_gpu > 1:
         loss = loss.mean()

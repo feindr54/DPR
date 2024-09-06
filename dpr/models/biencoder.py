@@ -378,8 +378,10 @@ class BiEncoderNllLoss(object):
             reduction="mean",
         )
 
-        max_score, max_idxs = torch.max(softmax_scores, 1)
-        correct_predictions_count = (max_idxs == torch.tensor(positive_idx_per_question).to(max_idxs.device)).sum()
+        # TODO - temporary fix for the time being
+        # max_score, max_idxs = torch.max(softmax_scores, 1)
+        # correct_predictions_count = (max_idxs == torch.tensor(positive_idx_per_question).to(max_idxs.device)).sum()
+        correct_predictions_count = 0
 
         if loss_scale:
             loss.mul_(loss_scale)
