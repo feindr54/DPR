@@ -91,10 +91,10 @@ def transformer_similarity_scores(q_vectors: T, ctx_vectors: T) -> T:
     scores = similarity_score_fn(q_vectors, ctx_vectors)
 
     # print the sizes of the q_vectors and ctx_vectors
-    print("q vector size: ", q_vectors.size())
-    print("ctx vector size: ", ctx_vectors.size())
-    # print the size of the result
-    print("result size: ", scores.size())
+    # print("q vector size: ", q_vectors.size())
+    # print("ctx vector size: ", ctx_vectors.size())
+    # # print the size of the result
+    # print("result size: ", scores.size())
 
     return scores
 
@@ -181,26 +181,26 @@ class BiEncoder(nn.Module):
             self.fix_q_encoder,
             representation_token_pos=representation_token_pos,
         )
-        print("q_pooled_out type: ", type(q_pooled_out))
-        print("q_hidden type: ", type(_q_hidden))
-        print("q_seq type: ", type(_q_seq))
+        # print("q_pooled_out type: ", type(q_pooled_out))
+        # print("q_hidden type: ", type(_q_hidden))
+        # print("q_seq type: ", type(_q_seq))
 
-        print("q_pooled_out: ", q_pooled_out.shape)
-        # print("q_hidden: ", _q_hidden.shape)
-        print("q_seq: ", _q_seq.shape)
+        # print("q_pooled_out: ", q_pooled_out.shape)
+        # # print("q_hidden: ", _q_hidden.shape)
+        # print("q_seq: ", _q_seq.shape)
 
         ctx_encoder = self.ctx_model if encoder_type is None or encoder_type == "ctx" else self.question_model
         _ctx_seq, ctx_pooled_out, _ctx_hidden = self.get_representation(
             ctx_encoder, context_ids, ctx_segments, ctx_attn_mask, self.fix_ctx_encoder
         )
 
-        print("ctx_pooled_out type: ", type(ctx_pooled_out))
-        print("ctx_hidden type: ", type(_ctx_hidden))
-        print("ctx_seq type: ", type(_ctx_seq))
+        # print("ctx_pooled_out type: ", type(ctx_pooled_out))
+        # print("ctx_hidden type: ", type(_ctx_hidden))
+        # print("ctx_seq type: ", type(_ctx_seq))
 
-        print("ctx_pooled_out: ", ctx_pooled_out.shape)
-        # print("ctx_hidden: ", _ctx_hidden.shape)
-        print("ctx_seq: ", _ctx_seq.shape)
+        # print("ctx_pooled_out: ", ctx_pooled_out.shape)
+        # # print("ctx_hidden: ", _ctx_hidden.shape)
+        # print("ctx_seq: ", _ctx_seq.shape)
 
         return q_pooled_out, _ctx_seq
 
@@ -233,10 +233,10 @@ class BiEncoder(nn.Module):
         hard_neg_ctx_indices = []
 
         # print the number of hard negatives and other negatives
-        print("number of hard negatives: ", num_hard_negatives)
-        print("number of other negatives: ", num_other_negatives)
-        # print if positive entries are shuffled
-        print("shuffle positives: ", shuffle_positives)
+        # print("number of hard negatives: ", num_hard_negatives)
+        # print("number of other negatives: ", num_other_negatives)
+        # # print if positive entries are shuffled
+        # print("shuffle positives: ", shuffle_positives)
 
         for sample in samples:
             # ctx+ & [ctx-] composition
@@ -350,9 +350,9 @@ class BiEncoderNllLoss(object):
             labels[positive_idx_per_question[i], i] = 1
 
         # add another dimension to question vectors
-        print("q_vectors shape before repeating: ", q_vectors.shape)
+        # print("q_vectors shape before repeating: ", q_vectors.shape)
         q_vectors = q_vectors.repeat(ctx_vectors.shape[0],1,1)
-        print("q_vectors shape after repeating: ", q_vectors.shape)
+        # print("q_vectors shape after repeating: ", q_vectors.shape)
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
         scores = self.biencoder.linear(scores).squeeze(-1)
 
