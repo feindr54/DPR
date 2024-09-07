@@ -350,9 +350,9 @@ class BiEncoderNllLoss(object):
             labels[positive_idx_per_question[i], i] = 1
 
         # add another dimension to question vectors
-        # print("q_vectors shape before repeating: ", q_vectors.shape)
+
         q_vectors = q_vectors.repeat(ctx_vectors.shape[0],1,1)
-        # print("q_vectors shape after repeating: ", q_vectors.shape)
+
         scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
         scores = self.biencoder.linear(scores).squeeze(-1)
 
@@ -362,14 +362,8 @@ class BiEncoderNllLoss(object):
         # softmax_scores = F.log_softmax(scores, dim=1)
         # softmax_scores = F.sigmoid(scores)
 
-        # softmax_scores = F.sigmoid(scores)
-        softmax_scores = scores
-
-        # print("softmax scores: ", softmax_scores)
-        # print("positive idx per question: ", torch.tensor(positive_idx_per_question).to(softmax_scores.device))
-
-
-
+        softmax_scores = F.sigmoid(scores)
+        # softmax_scores = scores
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
