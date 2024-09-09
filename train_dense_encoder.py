@@ -81,7 +81,7 @@ class BiEncoderTrainer(object):
         # print(f"Local rank: {cfg.local_rank}, device: {cfg.device}, n_gpu: {cfg.n_gpu}")
         if cfg.n_gpu > 1:
             raise RuntimeError(f"Training on multiple GPUs are not supported yet.")
-            
+
         model, optimizer = setup_for_distributed_mode(
             model,
             optimizer,
@@ -739,6 +739,9 @@ def _do_biencoder_fwd_pass(
 
     loss_function = BiEncoderNllLoss(model)
 
+    # print(f"input.is_positive: {input.is_positive}")
+    # print(f"input.question_segments: {input.question_segments}")
+    # print(f"input.ctx_segments: {input.ctx_segments}")
     loss, is_correct = _calc_loss(
         cfg,
         loss_function,
