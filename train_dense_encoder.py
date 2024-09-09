@@ -78,6 +78,10 @@ class BiEncoderTrainer(object):
 
         tensorizer, model, optimizer = init_biencoder_components(cfg.encoder.encoder_model_type, cfg)
 
+        # print(f"Local rank: {cfg.local_rank}, device: {cfg.device}, n_gpu: {cfg.n_gpu}")
+        if cfg.n_gpu > 1:
+            raise RuntimeError(f"Training on multiple GPUs are not supported yet.")
+            
         model, optimizer = setup_for_distributed_mode(
             model,
             optimizer,
@@ -604,8 +608,9 @@ class BiEncoderTrainer(object):
 def _calc_loss(
     cfg,
     loss_function,
-    local_q_vector,
-    local_ctx_vectors,
+    # local_q_vector,
+    # local_ctx_vectors,
+    local_logits,
     local_positive_idxs,
     local_hard_negatives_idxs: list = None,
     loss_scale: float = None,
@@ -616,48 +621,50 @@ def _calc_loss(
     """
     distributed_world_size = cfg.distributed_world_size or 1
     if distributed_world_size > 1:
-        q_vector_to_send = torch.empty_like(local_q_vector).cpu().copy_(local_q_vector).detach_()
-        ctx_vector_to_send = torch.empty_like(local_ctx_vectors).cpu().copy_(local_ctx_vectors).detach_()
+        raise NotImplementedError
+        # q_vector_to_send = torch.empty_like(local_q_vector).cpu().copy_(local_q_vector).detach_()
+        # ctx_vector_to_send = torch.empty_like(local_ctx_vectors).cpu().copy_(local_ctx_vectors).detach_()
 
-        global_question_ctx_vectors = all_gather_list(
-            [
-                q_vector_to_send,
-                ctx_vector_to_send,
-                local_positive_idxs,
-                local_hard_negatives_idxs,
-            ],
-            max_size=cfg.global_loss_buf_sz,
-        )
+        # global_question_ctx_vectors = all_gather_list(
+        #     [
+        #         q_vector_to_send,
+        #         ctx_vector_to_send,
+        #         local_positive_idxs,
+        #         local_hard_negatives_idxs,
+        #     ],
+        #     max_size=cfg.global_loss_buf_sz,
+        # )
 
-        global_q_vector = []
-        global_ctxs_vector = []
+        # global_q_vector = []
+        # global_ctxs_vector = []
 
-        # ctxs_per_question = local_ctx_vectors.size(0)
-        positive_idx_per_question = []
-        hard_negatives_per_question = []
+        # # ctxs_per_question = local_ctx_vectors.size(0)
+        # positive_idx_per_question = []
+        # hard_negatives_per_question = []
 
-        total_ctxs = 0
+        # total_ctxs = 0
 
-        for i, item in enumerate(global_question_ctx_vectors):
-            q_vector, ctx_vectors, positive_idx, hard_negatives_idxs = item
+        # for i, item in enumerate(global_question_ctx_vectors):
+        #     q_vector, ctx_vectors, positive_idx, hard_negatives_idxs = item
 
-            if i != cfg.local_rank:
-                global_q_vector.append(q_vector.to(local_q_vector.device))
-                global_ctxs_vector.append(ctx_vectors.to(local_q_vector.device))
-                positive_idx_per_question.extend([v + total_ctxs for v in positive_idx])
-                hard_negatives_per_question.extend([[v + total_ctxs for v in l] for l in hard_negatives_idxs])
-            else:
-                global_q_vector.append(local_q_vector)
-                global_ctxs_vector.append(local_ctx_vectors)
-                positive_idx_per_question.extend([v + total_ctxs for v in local_positive_idxs])
-                hard_negatives_per_question.extend([[v + total_ctxs for v in l] for l in local_hard_negatives_idxs])
-            total_ctxs += ctx_vectors.size(0)
-        global_q_vector = torch.cat(global_q_vector, dim=0)
-        global_ctxs_vector = torch.cat(global_ctxs_vector, dim=0)
+        #     if i != cfg.local_rank:
+        #         global_q_vector.append(q_vector.to(local_q_vector.device))
+        #         global_ctxs_vector.append(ctx_vectors.to(local_q_vector.device))
+        #         positive_idx_per_question.extend([v + total_ctxs for v in positive_idx])
+        #         hard_negatives_per_question.extend([[v + total_ctxs for v in l] for l in hard_negatives_idxs])
+        #     else:
+        #         global_q_vector.append(local_q_vector)
+        #         global_ctxs_vector.append(local_ctx_vectors)
+        #         positive_idx_per_question.extend([v + total_ctxs for v in local_positive_idxs])
+        #         hard_negatives_per_question.extend([[v + total_ctxs for v in l] for l in local_hard_negatives_idxs])
+        #     total_ctxs += ctx_vectors.size(0)
+        # global_q_vector = torch.cat(global_q_vector, dim=0)
+        # global_ctxs_vector = torch.cat(global_ctxs_vector, dim=0)
 
     else:
-        global_q_vector = local_q_vector
-        global_ctxs_vector = local_ctx_vectors
+        # global_q_vector = local_q_vector
+        # global_ctxs_vector = local_ctx_vectors
+        global_logits = local_logits
         positive_idx_per_question = local_positive_idxs
         hard_negatives_per_question = local_hard_negatives_idxs
 
@@ -665,8 +672,9 @@ def _calc_loss(
 
     # TODO - just care about the loss will do, no need to concern with is_correct
     loss, is_correct = loss_function.calc(
-        global_q_vector,
-        global_ctxs_vector,
+        # global_q_vector,
+        # global_ctxs_vector,
+        global_logits,
         positive_idx_per_question,
         hard_negatives_per_question,
         loss_scale=loss_scale,
@@ -727,15 +735,16 @@ def _do_biencoder_fwd_pass(
                 representation_token_pos=rep_positions,
             )
 
-    local_q_vector, local_ctx_vectors = model_out
+    # local_q_vector, local_ctx_vectors = model_out
 
     loss_function = BiEncoderNllLoss(model)
 
     loss, is_correct = _calc_loss(
         cfg,
         loss_function,
-        local_q_vector,
-        local_ctx_vectors,
+        model_out,
+        # local_q_vector,
+        # local_ctx_vectors,
         input.is_positive,
         input.hard_negatives,
         loss_scale=loss_scale,

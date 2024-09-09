@@ -42,23 +42,24 @@ BiEncoderBatch = collections.namedtuple(
 rnd = random.Random(0)
 
 class CrossAttentionModule(nn.Module):
-    def __init__(self, device, attention_layers=6):
+    def __init__(self, attention_layers=6):
         super(CrossAttentionModule, self).__init__()
-        self.cx_attention = [] # output remains query size, ie abatch x seqlen x 768
         self.attention_layers = attention_layers
 
+        layers = []
         for _ in range(self.attention_layers):
-            self.cx_attention.append(nn.MultiheadAttention(768, 8, batch_first=True, device=device))
-            self.cx_attention.append(nn.Linear(in_features=768, out_features=768, device=device))
-            self.cx_attention.append(nn.ReLU())
+            layers.append(nn.MultiheadAttention(768, 8, batch_first=True))
+            layers.append(nn.Linear(in_features=768, out_features=768))
+            layers.append(nn.ReLU())
+
+        self.cx_attention = nn.ModuleList(layers)  # output remains query size, ie abatch x seqlen x 768
 
     def forward(self, query, context):
-        query = query.cuda()
-        key = context.cuda()
-        value = context.cuda()
+        # query = query.cuda()
+        # context = context.cuda()
         for i in range(self.attention_layers):
             # cross attention layer
-            query = self.cx_attention[i*3](query, key, value)[0] # 0th index is attn output, 1st index is attention weights
+            query = self.cx_attention[i*3](query, context, context)[0] # 0th index is attn output, 1st index is attention weights
             # feedforward layer
             query = self.cx_attention[i*3+2](self.cx_attention[i*3+1](query))
         return query
@@ -76,7 +77,7 @@ def dot_product_scores(q_vectors: T, ctx_vectors: T) -> T:
     # print the sizes of the q_vectors and ctx_vectors
     # print("q vector size: ", q_vectors.size())
     # print("ctx vector size: ", ctx_vectors.size())
-    # # print the size of the result
+    # print the size of the result
     # print("result size: ", r.size())
 
     return r
@@ -120,7 +121,7 @@ class BiEncoder(nn.Module):
         self.fix_ctx_encoder = fix_ctx_encoder
 
         # TODO - add cross attention scoring module
-        self.cross_attention = CrossAttentionModule("cuda:0")
+        self.cross_attention = CrossAttentionModule()
         self.linear = nn.Linear(in_features=768, out_features=1)
 
     @staticmethod
@@ -202,7 +203,15 @@ class BiEncoder(nn.Module):
         # # print("ctx_hidden: ", _ctx_hidden.shape)
         # print("ctx_seq: ", _ctx_seq.shape)
 
-        return q_pooled_out, _ctx_seq
+        # calculate scores
+        q_pooled_out = q_pooled_out.repeat(_ctx_seq.shape[0],1,1)
+        # print(f"q_pooled_out shape: {q_pooled_out.shape}, device: {q_pooled_out.device}")
+        # print(f"_ctx_seq shape: {_ctx_seq.shape}, device: {_ctx_seq.device}")
+        logits = self.cross_attention(q_pooled_out, _ctx_seq)
+        logits = self.linear(logits).squeeze(-1)
+        # print(f"logits shape: {logits.shape}, device: {logits.device}")
+
+        return logits
 
     def create_biencoder_input(
         self,
@@ -329,8 +338,9 @@ class BiEncoderNllLoss(object):
     # TODO - add cross attention scoring module as the input
     def calc(
         self,
-        q_vectors: T,
-        ctx_vectors: T,
+        # q_vectors: T,
+        # ctx_vectors: T,
+        logits,
         positive_idx_per_question: list,
         hard_negative_idx_per_question: list = None,
         loss_scale: float = None,
@@ -345,16 +355,16 @@ class BiEncoderNllLoss(object):
         # scores = self.get_scores(q_vectors, ctx_vectors)
 
         # convert the positive_idx_per_question to a label tensor
-        labels = torch.zeros(ctx_vectors.shape[0], q_vectors.shape[0])
+        labels = torch.zeros(logits.shape)
         for i in range(len(positive_idx_per_question)):
             labels[positive_idx_per_question[i], i] = 1
 
-        # add another dimension to question vectors
+        # # add another dimension to question vectors
 
-        q_vectors = q_vectors.repeat(ctx_vectors.shape[0],1,1)
+        # q_vectors = q_vectors.repeat(ctx_vectors.shape[0],1,1)
 
-        scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
-        scores = self.biencoder.linear(scores).squeeze(-1)
+        # scores = self.biencoder.cross_attention(q_vectors, ctx_vectors)
+        # scores = self.biencoder.linear(scores).squeeze(-1)
 
         # if len(q_vectors.size()) > 1:
         #     q_num = q_vectors.size(0)
@@ -362,14 +372,14 @@ class BiEncoderNllLoss(object):
         # softmax_scores = F.log_softmax(scores, dim=1)
         # softmax_scores = F.sigmoid(scores)
 
-        softmax_scores = F.sigmoid(scores)
+        # sigmoid_scores = F.sigmoid(logits)
         # softmax_scores = scores
 
         # TODO - try with BCELogitsLoss and sigmoid
         loss = F.binary_cross_entropy_with_logits(
-            softmax_scores,
+            logits,
             # torch.tensor(positive_idx_per_question).to(softmax_scores.device),
-            labels.to(softmax_scores.device),
+            labels.to(logits.device),
             reduction="mean",
         )
 
